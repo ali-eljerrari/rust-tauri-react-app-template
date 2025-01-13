@@ -1,5 +1,6 @@
 use std::process::Command;
 
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -14,6 +15,12 @@ fn get_rust_version() -> String {
         .expect("Failed to execute rustc");
     String::from_utf8(output.stdout).expect("Failed to convert output to string")
 }
+
+// #[tauri::command]
+// fn resize_window(width: &str, height: &str) -> String {
+//     println!("Resizing window to {}x{}", width, height);
+//     format!("Window resized to {}x{}", width, height)
+// }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

@@ -2,30 +2,23 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-// import { ask } from "@tauri-apps/plugin-dialog";
 import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
-// when using `"withGlobalTauri": true`, you may use
-// const { enable, isEnabled, disable } = window.__TAURI__.autostart;
-
 import { platform } from "@tauri-apps/plugin-os";
-// when using `"withGlobalTauri": true`, you may use
-
 import {
   isPermissionGranted,
   requestPermission,
   sendNotification,
 } from "@tauri-apps/plugin-notification";
-// when using `"withGlobalTauri": true`, you may use
-// const { isPermissionGranted, requestPermission, sendNotification, } = window.__TAURI__.notification;
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [rustVersion, setRustVersion] = useState("");
   const [isEnabledStatus, setIsEnabledStatus] = useState(false);
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
   const [name, setName] = useState("");
 
   async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
   }
 
@@ -48,28 +41,19 @@ function App() {
 
   const openDialog = async () => {
     const currentPlatform = platform();
-
-    // Do you have permission to send a notification?
     let permissionGranted = await isPermissionGranted();
 
-    // If not we need to request it
     if (!permissionGranted) {
       const permission = await requestPermission();
       permissionGranted = permission === "granted";
     }
 
-    // Once permission has been granted we can send the notification
     if (permissionGranted) {
       sendNotification({
         title: "Tauri App",
         body: `You are running on ${currentPlatform}`,
       });
     }
-
-    // const answer = await ask(currentPlatform, {
-    //   title: "Tauri App",
-    //   kind: "warning",
-    // });
   };
 
   const toggleAutostart = async () => {
@@ -83,34 +67,80 @@ function App() {
     checkAutostartStatus();
   };
 
+  const resizeWindow = async () => {
+    await invoke("resize_window", { width, height });
+  };
+
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-      <p>Rust version: {rustVersion}</p>
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
+    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <h1 className="text-3xl font-bold mb-4">Welcome to Tauri + React</h1>
+      <p className="text-lg mb-4">Rust version: {rustVersion}</p>
+      <div className="flex space-x-4 mb-4">
+        <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">
+          <img src="/vite.svg" className="w-16 h-16" alt="Vite logo" />
         </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
+        <a href="https://tauri.app" target="_blank" rel="noopener noreferrer">
+          <img src="/tauri.svg" className="w-16 h-16" alt="Tauri logo" />
         </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
+        <a href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
+          <img src={reactLogo} className="w-16 h-16" alt="React logo" />
         </a>
       </div>
 
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+      <p className="text-center mb-4">
+        Click on the Tauri, Vite, and React logos to learn more.
+      </p>
 
-      <div>
-        {/* <button onClick={openDialog}>Click Me</button> */}
-        <button onClick={toggleAutostart}>
+      <div className="flex space-x-4 mb-4">
+        <button
+          onClick={toggleAutostart}
+          className={`px-4 py-2 rounded ${
+            isEnabledStatus
+              ? "bg-red-500 text-white"
+              : "bg-green-500 text-white"
+          }`}
+        >
           {isEnabledStatus ? "Disable" : "Enable"} Autostart
         </button>
-        <button onClick={openDialog}>What is my platform?</button>
+        <button
+          onClick={openDialog}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          What is my platform?
+        </button>
       </div>
 
       <form
-        className="row"
+        className="flex flex-col items-center mb-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          resizeWindow();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Enter a width..."
+          className="border border-gray-300 rounded p-2 mb-2 w-1/2"
+          onChange={(e) => setWidth(e.currentTarget.value)}
+          value={width}
+        />
+        <input
+          type="text"
+          placeholder="Enter a height..."
+          className="border border-gray-300 rounded p-2 mb-2 w-1/2"
+          onChange={(e) => setHeight(e.currentTarget.value)}
+          value={height}
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Resize
+        </button>
+      </form>
+
+      <form
+        className="flex flex-col items-center"
         onSubmit={(e) => {
           e.preventDefault();
           greet();
@@ -120,10 +150,16 @@ function App() {
           id="greet-input"
           onChange={(e) => setName(e.currentTarget.value)}
           placeholder="Enter a name..."
+          className="border border-gray-300 rounded p-2 mb-2"
         />
-        <button type="submit">Greet</button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-yellow-500 text-white rounded"
+        >
+          Greet
+        </button>
       </form>
-      <p>{greetMsg}</p>
+      <p className="mt-4 text-lg">{greetMsg}</p>
     </main>
   );
 }
